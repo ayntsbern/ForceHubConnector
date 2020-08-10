@@ -1,17 +1,60 @@
 package com.oauth.salesforce;
 
-import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.PropertySource;
+import org.springframework.http.*;
+import org.springframework.http.converter.HttpMessageConverter;
+import org.springframework.http.converter.StringHttpMessageConverter;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.RestTemplate;
+import org.springframework.web.util.UriComponentsBuilder;
+
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.List;
 
 @RestController
+@RequestMapping("/oauth")
 public class OAuthLogin {
-    private static final String template = "Hello, %s!";
+
+    @Autowired
+    private LoginConfigure loginConfigure;
 
     @GetMapping("/login")
-    public String login(@RequestParam(value = "name", defaultValue = "World") String name) {
-        return "Example";
+    @ResponseBody
+    public String login() {
+        String result = "";
+        ResponseEntity<String> responseEntity;
+        try {
+            RestTemplate restTemplate = new RestTemplate();
+            List<HttpMessageConverter<?>> httpMessageConverter = new ArrayList<>();
+            httpMessageConverter.add(
+                    new StringHttpMessageConverter(StandardCharsets.UTF_8)
+            );
+            restTemplate.setMessageConverters(httpMessageConverter);
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
+
+            UriComponentsBuilder builder = UriComponentsBuilder.fromHttpUrl(loginConfigure.getEndpoint())
+                    .queryParam("response_type", "token")
+                    .queryParam("client_id", loginConfigure.getClientId())
+                    .queryParam("redirect_uri", loginConfigure.getRedirectUri());
+            HttpEntity<String> entity = new HttpEntity<>(null, headers);
+            responseEntity = restTemplate.exchange(
+                    builder.toUriString(), HttpMethod.GET, entity, String.class
+            );
+            result = responseEntity.getBody();
+        } catch (HttpClientErrorException httpClientErrorException) {
+            result = httpClientErrorException.getMessage();
+        }
+        return result;
+    }
+
+    @GetMapping("/_callback")
+    @ResponseBody
+    public String callback(@PathVariable String access_token) {
+        return access_token;
     }
 }
