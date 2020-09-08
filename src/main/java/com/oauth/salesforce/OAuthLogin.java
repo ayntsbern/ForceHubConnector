@@ -14,6 +14,7 @@ import org.springframework.web.util.UriComponentsBuilder;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/oauth")
@@ -54,7 +55,7 @@ public class OAuthLogin {
 
     @GetMapping("/_callback")
     @ResponseBody
-    public String callback(@PathVariable String access_token) {
-        return access_token;
+    public String callback(@RequestParam Map<String, String> queryMap) {
+        return queryMap.toString();
     }
 }
