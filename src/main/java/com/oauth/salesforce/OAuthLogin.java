@@ -11,6 +11,9 @@ import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
@@ -26,8 +29,6 @@ public class OAuthLogin {
     @GetMapping("/login")
     @ResponseBody
     public String login() {
-        String result = "";
-        ResponseEntity<String> responseEntity;
         try {
             RestTemplate restTemplate = new RestTemplate();
             List<HttpMessageConverter<?>> httpMessageConverter = new ArrayList<>();
@@ -43,19 +44,20 @@ public class OAuthLogin {
                     .queryParam("client_id", loginConfigure.getClientId())
                     .queryParam("redirect_uri", loginConfigure.getRedirectUri());
             HttpEntity<String> entity = new HttpEntity<>(null, headers);
-            responseEntity = restTemplate.exchange(
+            ResponseEntity<String> responseEntity = restTemplate.exchange(
                     builder.toUriString(), HttpMethod.GET, entity, String.class
             );
-            result = responseEntity.getBody();
+            // return page with Salesforce authorization
+            return responseEntity.getBody();
         } catch (HttpClientErrorException httpClientErrorException) {
-            result = httpClientErrorException.getMessage();
+            return httpClientErrorException.getMessage();
         }
-        return result;
     }
 
     @GetMapping("/_callback")
     @ResponseBody
-    public String callback(@RequestParam Map<String, String> queryMap) {
-        return queryMap.toString();
+    public void callback(HttpServletResponse response, HttpServletRequest request) throws IOException {
+        response.setHeader("s", "s1");
+        response.sendRedirect("/callback" + request.getParameterMap());
     }
 }
