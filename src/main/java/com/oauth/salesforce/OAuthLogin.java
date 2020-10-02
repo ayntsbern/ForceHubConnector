@@ -57,7 +57,7 @@ public class OAuthLogin {
     @GetMapping("/_callback")
     @ResponseBody
     public void callback(HttpServletResponse response, HttpServletRequest request) throws IOException {
-        response.setHeader("s", "s1");
-        response.sendRedirect("/callback" + request.getParameterMap());
+        //response.setHeader("s", "s1");
+        response.sendRedirect("/callback");
     }
 }
